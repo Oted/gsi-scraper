@@ -1,0 +1,42 @@
+{
+    "urls" : ["http://imgur.com/?scrolled&set=0","http://imgur.com/?scrolled&set=1", "http://imgur.com/?scrolled&set=2"],
+    "mapping" : {
+        "extractor" : "dom_array",
+        "path" : "div.post a[href*=gallery]",
+        "attr" : "href",
+        "prefix" : "http://imgur.com/",
+        "follow" : true,
+        "mapping" : {
+            "extractor" : "dom_object",
+            "keys" : {
+                "title" : {
+                    "extractor" : "dom_string",
+                    "path" : "h2#image-title"
+                },
+                "data" : {
+                    "try" : 
+                    [
+                        {
+                            "extractor" : "dom_string",
+                            "path" : "div#image div a img",
+                            "attr" : "src"
+                        },
+                        {
+                            "extractor" : "dom_string",
+                            "path" : "div#image div img",
+                            "attr" : "src"
+                        },
+                        {
+                            "extractor" : "dom_script",
+                            "start_string" : "var videoItem =",
+                            "mapping" : {
+                                "type" : "string",
+                                "path" : "gifUrl"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

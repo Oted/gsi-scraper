@@ -1,0 +1,33 @@
+{
+    "urls" : [
+        "http://www.reddit.com/r/videos/",
+        "http://www.reddit.com/r/videos/top/",
+        "http://www.reddit.com/r/videos/new/",
+        "http://www.reddit.com/r/videos/rising/",
+        "http://www.reddit.com/r/videos/controversial/"
+    ],
+    "mapping" : {
+        "extractor" : "dom_array",
+        "path" : "div.thing",
+        "type" : "object",
+        "mapping" : {
+            "extractor" : "dom_object",
+            "keys" : {
+                "title" : {
+                    "extractor" : "dom_string",
+                    "path" : "a.title"
+                },
+                "data" : {
+                    "try" : 
+                    [
+                        {
+                            "extractor" : "dom_string",
+                            "path" : "a.title",
+                            "attr" : "href"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

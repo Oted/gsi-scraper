@@ -1,0 +1,16 @@
+{
+  "name": "mess_scraper",
+  "version": "1.0.0",
+  "description": "scraping stuff for messapp",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "hoek": "^2.10.0",
+    "request": "^2.51.0"
+  }
+}
