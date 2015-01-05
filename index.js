@@ -4,7 +4,7 @@ var fs          = require('fs'),
     Hoek        = require('hoek'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
-    requestSpan = 1000 * 60 * 5,
+    requestSpan = 1000 * 10,
     internals   = {};
 
 /**
@@ -15,7 +15,8 @@ internals.allScraped = function(err, results) {
         throw err;
     }
     
-    var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
+    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+
     results = Hoek.flatten(results);
     injector.injectMultiple(results, function(err) {
         if (err) {
@@ -30,16 +31,21 @@ internals.allScraped = function(err, results) {
 /**
  *  Completely scrapes a mapping file and callbacks when done
  */
-internals.scrapeMapping = function(mapping, done) {
+internals.scrapeMapping = function(file, done) {
+    try {
+        var mapping = require('./mappings/' + file);
+    } catch (err) {
+        throw err; 
+    }
+
     //animated tabs is a special case, deal with it
-    if (mapping.indexOf('animatedtabs') > -1) {
+    if (file.indexOf('animatedtabs') > -1) {
         return internals.requestAnimatedTabs(done);
     }
     
-    try {
-        mapping = require('./mappings/' + mapping);
-    } catch (err) {
-        throw err; 
+    //if its soundcloud 
+    if (file.indexOf('soundcloud') > -1) {
+        return internals.requestSoundcloud(mapping, done);
     }
 
     if (!mapping.urls || !Array.isArray(mapping.urls) || mapping.urls.length < 1) {
@@ -96,6 +102,53 @@ internals.requestAnimatedTabs = function(done) {
         });
 
         return done(null, json);
+    });
+};
+
+
+/**
+ *  Scrape soundcloud users
+ */
+internals.requestSoundcloud = function(mapping, done) {
+    //for all urls (soundclid users) in mapping
+    var allItems = [];
+
+    Async.each(mapping.urls, function(url, next) {
+        Request('http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body1) {
+            if (err) {
+                return done(err);
+            }
+
+            var json1 = JSON.parse(body1);
+            
+            Request('http://api.soundcloud.com/users/' + json1.id + '/favorites.json?client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body2) {
+                if (err) {
+                    return done(err);
+                }
+
+                var json = JSON.parse(body2);
+
+                json.map(function(obj) {
+                    var newObj = {
+                            'title' : obj.title,
+                            'type' : 'soundcloud',
+                            'data' : obj.id + ''
+                        };
+
+                    //its added here
+                    allItems.push(newObj);
+                    return newObj;
+                });
+
+                return next();
+            });
+        });
+    }, function(err) {
+        if (err) {
+            return done(err);
+        }
+
+        return done(null, allItems);
     });
 };
 
