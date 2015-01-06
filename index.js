@@ -4,7 +4,7 @@ var fs          = require('fs'),
     Hoek        = require('hoek'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
-    requestSpan = 1000 * 10,
+    requestSpan = 1000 * 20,
     internals   = {};
 
 /**
@@ -48,6 +48,17 @@ internals.scrapeMapping = function(file, done) {
         return internals.requestSoundcloud(mapping, done);
     }
 
+    //if its 9gag
+    if (file.indexOf('9gag') > -1) {
+        return internals.request9gag(mapping, done);
+    }
+
+    //if its 9gag
+    if (file.indexOf('reddit.json') > -1) {
+        return internals.requestReddit(mapping, done);
+    }
+
+
     if (!mapping.urls || !Array.isArray(mapping.urls) || mapping.urls.length < 1) {
         return done(new Error('Mapping must have urls, it must e an array and must have at least one url.'));
     }
@@ -75,7 +86,10 @@ internals.scrapeUrl = function(mapping, url, done) {
     
     setTimeout(function() { 
         plougher.scrape(url, mapping, function(err, result) {
-            console.log(err);
+            if (err) {
+                console.log(err);
+            }
+
             return done(null, result);
         });
     }, Math.floor(Math.random() * (requestSpan / 2)));
@@ -105,9 +119,86 @@ internals.requestAnimatedTabs = function(done) {
     });
 };
 
+/**
+ *  Scrape 9gag links
+ */
+internals.requestReddit = function(mapping, done) {
+    var allItems = [];
+
+    Async.each(mapping.urls, function(url, next) {
+        Request(url, function(err, httpResponse, body) {
+            if (err) {
+                return next(err);
+            }
+            
+            if (httpResponse.statusCode !== 200) {
+                return next();
+            }
+
+            var json = JSON.parse(body);
+            json.data.children.map(function(obj) {
+                var newObj = {
+                    'title' : obj.data.title,
+                    'data' : obj.data.url
+                }
+                
+                allItems.push(newObj);
+                return obj;
+            });
+
+            return next(null, json); 
+        });
+    }, function(err, results) {
+        if (err) {
+            return done(err);
+        }
+        
+        return done(null, allItems);
+    });
+};
 
 /**
- *  Scrape soundcloud users
+ *  Scrape 9gag links
+ */
+internals.request9gag = function(mapping, done) {
+    var allItems = [];
+
+    Async.each(mapping.urls, function(url, next) {
+        Request(url, function(err, httpResponse, body) {
+            if (err) {
+                return next(err);
+            }
+            
+            if (httpResponse.statusCode !== 200) {
+                return next();
+            }
+
+            var json = JSON.parse(body);
+            json.result.map(function(obj) {
+                allItems.push(obj.url);
+                return obj;
+            });
+
+            return next(null, json); 
+        });
+    }, function(err, results) {
+        if (err) {
+            return done(err);
+        }
+        
+        Async.map(allItems, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
+            if (err) {
+                throw err;
+            }
+
+            results = Hoek.flatten(results);
+            return done(null, results);
+        });
+    });
+};
+
+/**
+ *  Scrape soundcloud
  */
 internals.requestSoundcloud = function(mapping, done) {
     //for all urls (soundclid users) in mapping
@@ -117,6 +208,10 @@ internals.requestSoundcloud = function(mapping, done) {
         Request('http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body1) {
             if (err) {
                 return done(err);
+            }
+            
+            if (httpResponse.statusCode !== 200) {
+                return next();
             }
 
             var json1 = JSON.parse(body1);

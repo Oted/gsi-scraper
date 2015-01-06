@@ -1,0 +1,32 @@
+{
+    "urls" : [
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=trending",
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=hot",
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=fresh",
+        "http://ajax-cdn.9gag.com/read/ajax-featured"
+    ],
+    "mapping" : {
+        "extractor" : "dom_object",
+        "keys" : {
+            "title" : {
+                "extractor" : "dom_string",
+                "path" : "h2.badge-item-title"
+            },
+            "data" : {
+                "try" : 
+                [
+                    {
+                        "extractor" : "dom_string",
+                        "path" : "div.badge-animated-container-animated",
+                        "attr" : "data-image"
+                    }, 
+                    {
+                        "extractor" : "dom_string",
+                        "path" : "img.badge-item-img",
+                        "attr" : "src"
+                    }
+                ]
+            }
+        }
+    }
+}

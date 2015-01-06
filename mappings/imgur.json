@@ -1,5 +1,11 @@
 {
-    "urls" : ["http://imgur.com/?scrolled&set=0","http://imgur.com/?scrolled&set=1", "http://imgur.com/?scrolled&set=2"],
+    "urls" : [
+        "http://imgur.com/?scrolled&set=0",
+        "http://imgur.com/?scrolled&set=1", 
+        "http://imgur.com/?scrolled&set=2",
+        "http://imgur.com/?scrolled&set=3",
+        "http://imgur.com/?scrolled&set=4"
+    ],
     "mapping" : {
         "extractor" : "dom_array",
         "path" : "div.post a[href*=gallery]",
