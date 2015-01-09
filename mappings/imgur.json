@@ -1,10 +1,21 @@
 {
     "urls" : [
-        "http://imgur.com/?scrolled&set=0",
-        "http://imgur.com/?scrolled&set=1", 
-        "http://imgur.com/?scrolled&set=2",
-        "http://imgur.com/?scrolled&set=3",
-        "http://imgur.com/?scrolled&set=4"
+        "http://imgur.com/gallery/hot/viral/page/0/hit?scrolled&set=0",
+        "http://imgur.com/gallery/hot/viral/page/0/hit?scrolled&set=1",
+        "http://imgur.com/gallery/hot/viral/page/0/hit?scrolled&set=2",
+        "http://imgur.com/gallery/hot/viral/page/0/hit?scrolled&set=3",
+        "http://imgur.com/gallery/hot/viral/page/1/hit?scrolled&set=0",
+        "http://imgur.com/gallery/hot/viral/page/1/hit?scrolled&set=1",
+        "http://imgur.com/gallery/hot/viral/page/1/hit?scrolled&set=2",
+        "http://imgur.com/gallery/hot/viral/page/1/hit?scrolled&set=3",
+        "http://imgur.com/gallery/new/viral/page/0/hit?scrolled&set=0",
+        "http://imgur.com/gallery/new/viral/page/0/hit?scrolled&set=1",
+        "http://imgur.com/gallery/new/viral/page/0/hit?scrolled&set=2",
+        "http://imgur.com/gallery/new/viral/page/0/hit?scrolled&set=3",
+        "http://imgur.com/gallery/new/viral/page/1/hit?scrolled&set=0",
+        "http://imgur.com/gallery/new/viral/page/1/hit?scrolled&set=1",
+        "http://imgur.com/gallery/new/viral/page/1/hit?scrolled&set=2",
+        "http://imgur.com/gallery/new/viral/page/1/hit?scrolled&set=3"
     ],
     "mapping" : {
         "extractor" : "dom_array",
