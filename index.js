@@ -4,29 +4,53 @@ var fs          = require('fs'),
     Hoek        = require('hoek'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
-    requestSpan = 1000 * 20,
+    Ejector     = require('./lib/ejector.js'),
+    requestSpan = 1000 * 60 * 20,
     internals   = {};
 
-/**
- *  Called when all is scraped and we have final result
- */
-internals.allScraped = function(err, results) {
-    if (err) {
-        throw err;
-    }
-    
-    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+//mongo connection
+process.env.MONGO_URL = 'mongodb://localhost:27017/messapp';
 
-    results = Hoek.flatten(results);
-    injector.injectMultiple(results, function(err) {
-        if (err) {
-            console.log(err);
-        }
+/**
+ *  Init function for item processing
+ */
+internals.init = function(mappings) {
+    console.time('runtime');
+    console.log('Initializing...');
     
-        console.log('All done!');
+    var ejector = new Ejector(process.env.MONGO_URL, function() {
+        
+        //remove and add stuff in parallel
+        Async.parallel([
+            //eject stuff
+            ejector.getToWork.bind(ejector, requestSpan),
+            
+            //scrape all mappings in parallell
+            function(callback) {
+                Async.map(mappings, internals.scrapeMapping, function(err, results) {
+                    if (err) {
+                        throw err;
+                    }
+
+                    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+
+                    results = Hoek.flatten(results);
+                    injector.injectMultiple(results, callback);
+                });
+            }
+        ], function(err, results) {
+            if (err) {
+                throw err;
+            }
+
+            console.log('this run took : ');
+            console.timeEnd('runtime');
+            console.log(JSON.stringify(results, null, " "));
+            
+            return process.exit();
+        });
     });
 };
-
 
 /**
  *  Completely scrapes a mapping file and callbacks when done
@@ -70,7 +94,7 @@ internals.scrapeMapping = function(file, done) {
     console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
     Async.map(mapping.urls, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
         if (err) {
-            throw err;
+            return done(err);
         }
 
         results = Hoek.flatten(results);
@@ -83,8 +107,9 @@ internals.scrapeMapping = function(file, done) {
  */
 internals.scrapeUrl = function(mapping, url, done) {
     var plougher = new Plougher();
-    
+   
     setTimeout(function() { 
+        console.log('Scraping ' + url); 
         plougher.scrape(url, mapping, function(err, result) {
             if (err) {
                 console.log(err);
@@ -99,8 +124,10 @@ internals.scrapeUrl = function(mapping, url, done) {
  *  Scrape anumated tabs
  */
 internals.requestAnimatedTabs = function(done) {
+    console.log('Scraping animated tabs....');
     Request('http://animatedtabs.com/allgifs/400', function(err, httpResponse, body) {
         if (err) {
+            console.log('err in animated tabs!');
             return done(err);
         }
 
@@ -124,10 +151,12 @@ internals.requestAnimatedTabs = function(done) {
  */
 internals.requestReddit = function(mapping, done) {
     var allItems = [];
+    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
 
     Async.each(mapping.urls, function(url, next) {
         Request(url, function(err, httpResponse, body) {
             if (err) {
+                console.log('err in reddit!');
                 return next(err);
             }
             
@@ -163,9 +192,11 @@ internals.requestReddit = function(mapping, done) {
 internals.request9gag = function(mapping, done) {
     var allItems = [];
 
+    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
     Async.each(mapping.urls, function(url, next) {
         Request(url, function(err, httpResponse, body) {
             if (err) {
+                console.log('err in 9gag!');
                 return next(err);
             }
             
@@ -188,7 +219,7 @@ internals.request9gag = function(mapping, done) {
         
         Async.map(allItems, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
             if (err) {
-                throw err;
+                return done(err);
             }
 
             results = Hoek.flatten(results);
@@ -203,10 +234,12 @@ internals.request9gag = function(mapping, done) {
 internals.requestSoundcloud = function(mapping, done) {
     //for all urls (soundclid users) in mapping
     var allItems = [];
+    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
 
     Async.each(mapping.urls, function(url, next) {
         Request('http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body1) {
             if (err) {
+                console.log('err in soundclloud!');
                 return done(err);
             }
             
@@ -251,7 +284,14 @@ internals.requestSoundcloud = function(mapping, done) {
 if (process.argv.length === 3) {
     var mappingFile = process.argv[2];
 
-    return internals.scrapeMapping(mappingFile, internals.allScraped);
+    return internals.scrapeMapping(mappingFile, function(err, results) {
+        var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+
+        results = Hoek.flatten(results);
+        injector.injectMultiple(results, function(err, res) {
+            console.log(err, res);
+        });
+    });
 }
 
 //else read all mappings
@@ -265,8 +305,11 @@ fs.readdir('./mappings/', function(err, files) {
         return isJson.test(file);
     });
 
-    //scrape all mappings in parallell
-    Async.map(mappings, internals.scrapeMapping, internals.allScraped);
+    internals.init(mappings);
 });
 
 
+//on uncaught
+process.on('uncaughtException', function(err) {
+  console.log('Caught exception: ' + err);
+});
