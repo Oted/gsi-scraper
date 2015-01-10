@@ -5,7 +5,7 @@ var fs          = require('fs'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
     Ejector     = require('./lib/ejector.js'),
-    requestSpan = 1000 * 60 * 20,
+    requestSpan = 1000 * 60 * 60 * 6,
     internals   = {};
 
 //mongo connection
@@ -240,7 +240,7 @@ internals.requestSoundcloud = function(mapping, done) {
         Request('http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body1) {
             if (err) {
                 console.log('err in soundclloud!');
-                return done(err);
+                return next(err);
             }
             
             if (httpResponse.statusCode !== 200) {
@@ -249,11 +249,15 @@ internals.requestSoundcloud = function(mapping, done) {
 
             var json1 = JSON.parse(body1);
             
-            Request('http://api.soundcloud.com/users/' + json1.id + '/favorites.json?client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body2) {
-                if (err) {
-                    return done(err);
+            Request('http://api.soundcloud.com/users/' + json1.id + '/favorites.json?client_id=e6c07f810cdefc825605d23078c77e8d', function(err2, httpResponse2, body2) {
+                if (err2) {
+                    return next(err);
                 }
 
+                if (httpResponse2.statusCode !== 200) {
+                    return next();
+                }
+                
                 var json = JSON.parse(body2);
 
                 json.map(function(obj) {
