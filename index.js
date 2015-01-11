@@ -19,11 +19,10 @@ internals.init = function(mappings) {
     console.log('Initializing...');
     
     var ejector = new Ejector(process.env.MONGO_URL, function() {
-        
         //remove and add stuff in parallel
         Async.parallel([
             //eject stuff
-            ejector.getToWork.bind(ejector, requestSpan),
+            ejector.getToWork.bind(ejector, requestSpan)
             
             //scrape all mappings in parallell
             function(callback) {
@@ -32,7 +31,7 @@ internals.init = function(mappings) {
                         throw err;
                     }
 
-                    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+                    var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
 
                     results = Hoek.flatten(results);
                     injector.injectMultiple(results, callback);
@@ -46,8 +45,7 @@ internals.init = function(mappings) {
             console.log('this run took : ');
             console.timeEnd('runtime');
             console.log(JSON.stringify(results, null, " "));
-            
-            return process.exit();
+            ejector.close();
         });
     });
 };
@@ -91,7 +89,7 @@ internals.scrapeMapping = function(file, done) {
         return done(new Error('Mapping must have mapping lol'));
     }
 
-    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
+    console.log('Scraping ' + mapping.urls.length + ' other links....');
     Async.map(mapping.urls, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
         if (err) {
             return done(err);
@@ -124,7 +122,7 @@ internals.scrapeUrl = function(mapping, url, done) {
  *  Scrape anumated tabs
  */
 internals.requestAnimatedTabs = function(done) {
-    console.log('Scraping animated tabs....');
+    console.log('Scraping 400 gifs from animated tabs....');
     Request('http://animatedtabs.com/allgifs/400', function(err, httpResponse, body) {
         if (err) {
             console.log('err in animated tabs!');
@@ -151,7 +149,7 @@ internals.requestAnimatedTabs = function(done) {
  */
 internals.requestReddit = function(mapping, done) {
     var allItems = [];
-    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
+    console.log('Scraping ' + mapping.urls.length + ' reddit threads....');
 
     Async.each(mapping.urls, function(url, next) {
         Request(url, function(err, httpResponse, body) {
@@ -192,7 +190,7 @@ internals.requestReddit = function(mapping, done) {
 internals.request9gag = function(mapping, done) {
     var allItems = [];
 
-    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
+    console.log('Scraping ' + mapping.urls.length + ' 9gag links....');
     Async.each(mapping.urls, function(url, next) {
         Request(url, function(err, httpResponse, body) {
             if (err) {
@@ -234,7 +232,7 @@ internals.request9gag = function(mapping, done) {
 internals.requestSoundcloud = function(mapping, done) {
     //for all urls (soundclid users) in mapping
     var allItems = [];
-    console.log('Scraping ' + JSON.stringify(mapping.urls) + '....');
+    console.log('Scraping ' + mapping.urls.length + ' soundcloud users....');
 
     Async.each(mapping.urls, function(url, next) {
         Request('http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=e6c07f810cdefc825605d23078c77e8d', function(err, httpResponse, body1) {
@@ -308,12 +306,25 @@ fs.readdir('./mappings/', function(err, files) {
     var mappings = files.filter(function(file) {
         return isJson.test(file);
     });
-
+    
+    /**
+     *  Set an interval and repeat the scraping
+     */
+    setInterval(function () {
+        console.log('Starting a new session!');
+        internals.init(mappings);
+    }, requestSpan + 1000 * 60);
+        
+    //and one at runstart
     internals.init(mappings);
 });
-
 
 //on uncaught
 process.on('uncaughtException', function(err) {
   console.log('Caught exception: ' + err);
+});
+
+//on exit
+process.on('exit', function(){
+    ejector.close();
 });
