@@ -1,0 +1,33 @@
+{
+    "urls" : [
+        "http://infinigag.eu01.aws.af.cm/trending/",
+        "http://infinigag.eu01.aws.af.cm/hot/",
+        "http://infinigag-us.aws.af.cm/trending/",
+        "http://infinigag-us.aws.af.cm/hot/"
+    ],
+    "mapping" : {
+        "extractor" : "dom_object",
+        "keys" : {
+            "title" : {
+                "extractor" : "dom_string",
+                "path" : "h2.badge-item-title"
+            },
+            "data" : {
+                "try" : 
+                [
+                    {
+                        "extractor" : "dom_string",
+                        "path" : "div.badge-animated-container-animated",
+                        "attr" : "data-image"
+                    }, 
+                    {
+                        "extractor" : "dom_string",
+                        "path" : "img.badge-item-img",
+                        "attr" : "src"
+                    }
+                ]
+            }
+        }
+    }
+
+}

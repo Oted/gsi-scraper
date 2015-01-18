@@ -72,6 +72,11 @@ internals.scrapeMapping = function(file, done) {
         return internals.request9gag(mapping, done);
     }
 
+    //if its infigag
+    if (file.indexOf('infigag') > -1) {
+        return internals.requestInfigag(mapping, done);
+    }
+
     //if its 9gag
     if (file.indexOf('reddit.json') > -1) {
         return internals.requestReddit(mapping, done);
@@ -228,6 +233,93 @@ internals.request9gag = function(mapping, done) {
 };
 
 /**
+ *  Scrape infigag links
+ */
+internals.requestInfigag = function(mapping, done) {
+    var allItems = [];
+
+    console.log('Scraping ' + mapping.urls.length + ' infigag links....');
+    Async.each(mapping.urls, function(url, next) {
+        Request(url, function(err, httpResponse, body) {
+            if (err) {
+                console.log('err in infigag!' + err);
+                return next(err);
+            }
+            
+            if (httpResponse.statusCode !== 200) {
+                console.log('err in infigag!' + httpResponse.statusCode);
+                return next();
+            }
+
+            var json = JSON.parse(body);
+
+            if (!json || !json.data) {
+                return next();
+            }
+             
+            //scrape more pages   
+            return internals.helpInfigag(url, json.data, 5, function(newData) {
+                console.log(JSON.stringify(newData, null, " "));
+                if (!newData) {
+                    return next();
+                }
+                
+                newData.map(function(obj) {
+                    allItems.push(obj.link);
+                    return obj;
+                });
+
+                return next(null, json); 
+            });
+       });
+    }, function(err, _results) {
+        if (err) {
+            return done(err);
+        }
+        
+        Async.map(allItems, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
+            if (err) {
+                return done(err);
+            }
+
+            results = Hoek.flatten(results);
+            return done(null, results);
+        });
+    });
+};
+
+
+//help infigag sceraping
+internals.helpInfigag = function(url, data, pages, done) {
+    if (pages === 0) {
+        return done(data);
+    }
+
+    var lastindex = data[data.length - 1].id;
+    console.log('Requesting ' + (url + lastindex) + ' infigag...');
+    Request(url + lastindex, function(err, httpResponse, body) {
+        if (err) {
+            console.log('err in infigag!');
+            return done(data);
+        }
+        
+        if (httpResponse.statusCode !== 200) {
+            console.log('err in infigag!');
+            return done(data);
+        }
+
+        var json    = JSON.parse(body);
+
+        if (!json || !json.data) {
+            console.log('err in infigag!');
+            return done(data);
+        }
+
+        return internals.helpInfigag(url, data.concat(json.data), --pages, done);
+    });
+};
+
+/**
  *  Scrape soundcloud
  */
 internals.requestSoundcloud = function(mapping, done) {
@@ -308,7 +400,6 @@ fs.readdir('./mappings/', function(err, files) {
         return isJson.test(file);
     });
    
-    mappings =  mappings.slice(0,1);
     /**
      *  Set an interval and repeat the scraping
      */
@@ -322,9 +413,9 @@ fs.readdir('./mappings/', function(err, files) {
 });
 
 //on uncaught
-// process.on('uncaughtException', function(err) {
-  // console.log('Caught exception: ' + err);
-// });
+process.on('uncaughtException', function(err) {
+  console.log('Caught exception: ' + err);
+});
 
 //on exit
 process.on('exit', function(){
