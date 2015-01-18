@@ -5,7 +5,7 @@ var fs          = require('fs'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
     Ejector     = require('./lib/ejector.js'),
-    requestSpan = 1000 * 60 * 60 * 6,
+    requestSpan = 1000 * 60 * 5,
     internals   = {};
 
 //mongo connection
@@ -22,18 +22,15 @@ internals.init = function(mappings) {
         //remove and add stuff in parallel
         Async.parallel([
             //eject stuff
-            ejector.getToWork.bind(ejector, requestSpan)
+            ejector.getToWork.bind(ejector, requestSpan),
             
             //scrape all mappings in parallell
             function(callback) {
                 Async.map(mappings, internals.scrapeMapping, function(err, results) {
-                    if (err) {
-                        throw err;
-                    }
+                    //var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
+                    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
 
-                    var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
-
-                    results = Hoek.flatten(results);
+                    results = Hoek.flatten(results || []);
                     injector.injectMultiple(results, callback);
                 });
             }
@@ -57,7 +54,7 @@ internals.scrapeMapping = function(file, done) {
     try {
         var mapping = require('./mappings/' + file);
     } catch (err) {
-        throw err; 
+        return done(err); 
     }
 
     //animated tabs is a special case, deal with it
@@ -92,9 +89,9 @@ internals.scrapeMapping = function(file, done) {
     console.log('Scraping ' + mapping.urls.length + ' other links....');
     Async.map(mapping.urls, internals.scrapeUrl.bind(this, mapping.mapping), function(err, results) {
         if (err) {
-            return done(err);
+            return done();
         }
-
+       
         results = Hoek.flatten(results);
         return done(null, results);
     });
@@ -104,16 +101,15 @@ internals.scrapeMapping = function(file, done) {
  *  Scrape one url with a mapping, callbacks when done with a result
  */
 internals.scrapeUrl = function(mapping, url, done) {
-    var plougher = new Plougher();
-   
     setTimeout(function() { 
+        var plougher = new Plougher();
         console.log('Scraping ' + url); 
-        plougher.scrape(url, mapping, function(err, result) {
+        plougher.scrape(url, mapping, function(err, results) {
             if (err) {
-                console.log(err);
+                console.error(err);
             }
-
-            return done(null, result);
+            
+            return done(null, results);
         });
     }, Math.floor(Math.random() * (requestSpan / 2)));
 };
@@ -203,6 +199,11 @@ internals.request9gag = function(mapping, done) {
             }
 
             var json = JSON.parse(body);
+            
+            if (!json || !json.result) {
+                return next();
+            }
+            
             json.result.map(function(obj) {
                 allItems.push(obj.url);
                 return obj;
@@ -210,7 +211,7 @@ internals.request9gag = function(mapping, done) {
 
             return next(null, json); 
         });
-    }, function(err, results) {
+    }, function(err, _results) {
         if (err) {
             return done(err);
         }
@@ -306,7 +307,8 @@ fs.readdir('./mappings/', function(err, files) {
     var mappings = files.filter(function(file) {
         return isJson.test(file);
     });
-    
+   
+    mappings =  mappings.slice(0,1);
     /**
      *  Set an interval and repeat the scraping
      */
@@ -320,9 +322,9 @@ fs.readdir('./mappings/', function(err, files) {
 });
 
 //on uncaught
-process.on('uncaughtException', function(err) {
-  console.log('Caught exception: ' + err);
-});
+// process.on('uncaughtException', function(err) {
+  // console.log('Caught exception: ' + err);
+// });
 
 //on exit
 process.on('exit', function(){
