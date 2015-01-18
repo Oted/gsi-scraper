@@ -5,7 +5,7 @@ var fs          = require('fs'),
     Request     = require('request'),
     Injector    = require('./lib/injector.js'),
     Ejector     = require('./lib/ejector.js'),
-    requestSpan = 1000 * 60 * 5,
+    requestSpan = 1000 * 60 * 60 * 7,
     internals   = {};
 
 //mongo connection
@@ -28,7 +28,7 @@ internals.init = function(mappings) {
             function(callback) {
                 Async.map(mappings, internals.scrapeMapping, function(err, results) {
                     //var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
-                    var injector = new Injector('http://localhost:3000/api/items', Math.floor(requestSpan / 2));
+                    var injector = new Injector('http://188.166.45.196:3000/api/items', Math.floor(requestSpan / 2));
 
                     results = Hoek.flatten(results || []);
                     injector.injectMultiple(results, callback);
