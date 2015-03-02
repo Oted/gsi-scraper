@@ -28,7 +28,7 @@
             "keys" : {
                 "title" : {
                     "extractor" : "dom_string",
-                    "path" : "h2#image-title"
+                    "path" : "#image-title"
                 },
                 "data" : {
                     "try" : 
