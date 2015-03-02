@@ -5,15 +5,17 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 60,
+    requestSpan     = 1000 * 30,
     internals       = {};
 
 //create the scraper
-Scraper = new Scraper(requestSpan);
+Scraper = new Scraper();
 
-//mongo connection
-process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
-process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
+process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
+process.env.API_URL     = 'http://localhost:3000/api/items';
+
+// process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
+// process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
 
 /**
  *  Init function for item processing
@@ -32,7 +34,7 @@ internals.init = function(mappings) {
             //eject stuff
             ejector.getToWork.bind(ejector, requestSpan),
             
-            //scrape all mappings in parallell
+            //scrape all mappings in parallel
             function(callback) {
                 Async.map(mappings, internals.scrapeMapping, function(err, results) {
                     var injector = new Injector(process.env.API_URL, Math.floor(requestSpan / 2), ItemModel);
@@ -59,15 +61,13 @@ internals.init = function(mappings) {
  */
 internals.scrapeMapping = function(file, done) {
     try {
-        var mapping = require('./mappings/' + file);
+        //set a timeout of half span
+        setTimeout(function() { 
+            var mapping = require('./mappings/' + file);
+            Scraper.scrape(file, mapping, done); 
+        }, Math.floor(Math.random() * (requestSpan / 2)));
     } catch (err) {
         return done(err); 
-    }
-    
-    try {
-        Scraper.scrape(file, mapping, done); 
-    } catch (err) {
-        return done(err);
     }
 };
 
@@ -105,5 +105,6 @@ if (process.argv.length === 3) {
 
 //on uncaught
 process.on('uncaughtException', function(err) {
-  console.log('Caught exception: ' + err);
+    //throw err;
+    console.log('Caught exception: ' + err);
 });
