@@ -14,8 +14,8 @@ Scraper = new Scraper(Math.floor(requestSpan / 2));
 process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
 process.env.API_URL     = 'http://localhost:3000/api/items';
 
-// process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
-// process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
+process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
+process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
 
 /**
  *  Init function for item processing
