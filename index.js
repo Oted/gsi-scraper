@@ -53,6 +53,7 @@ internals.init = function(mappings) {
             console.log(JSON.stringify(results, null, " "));
             ejector.close();
             ejector = null;
+            internals.init(mappings);
         });
     });
 };
@@ -91,10 +92,10 @@ if (process.argv.length === 3) {
         /**
          *  Set an interval and repeat the scraping
          */
-        setInterval(function () {
-            console.log('Starting a new session!');
-            internals.init(mappings);
-        }, requestSpan + 1000 * 60 * 3);
+        // setInterval(function () {
+            // console.log('Starting a new session!');
+            // internals.init(mappings);
+        // }, requestSpan + 1000 * 60 * 3);
             
         //and one at runstart
         internals.init(mappings);
