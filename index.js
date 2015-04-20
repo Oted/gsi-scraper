@@ -36,7 +36,13 @@ internals.init = function(mappings) {
             
             //scrape all mappings in parallel
             function(callback) {
-                Async.map(mappings, internals.scrapeMapping, function(err, results) {
+                Async.map(mappings, 
+                        internals.scrapeMapping, 
+                        function(err, results) {
+                    if (err) {
+                    
+                    //    throw err;
+                    }
                     var injector = new Injector(process.env.API_URL, Math.floor(requestSpan / 2), ItemModel);
 
                     results = Hoek.flatten(results || []);
