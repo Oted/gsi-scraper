@@ -21,18 +21,28 @@
         "extractor" : "dom_array",
         "path" : "div.post a[href*=gallery]",
         "attr" : "href",
-        "prefix" : "http://imgur.com/",
+        "prefix" : "http://imgur.com",
         "follow" : true,
         "mapping" : {
             "extractor" : "dom_object",
             "keys" : {
                 "title" : {
-                    "extractor" : "dom_string",
-                    "path" : "#image-title"
+                    "try" : [
+                        {
+                            "extractor" : "dom_string",
+                            "path" : "#image-title"
+                        }
+                    ]
                 },
                 "data" : {
                     "try" : 
                     [
+                        {   
+                            "extractor" : "dom_string",
+                            "path" : "a.zoom img",
+                            "attr" : "src",
+                            "prefix" : "http:"
+                        },
                         {
                             "extractor" : "dom_string",
                             "path" : "div#image div a img",

@@ -14,6 +14,8 @@
     "hoek": "^2.10.0",
     "mongoose": "^3.8.21",
     "mongoose-times": "^0.1.0",
+    "phantom": "^0.7.2",
+    "phantomjs": "^1.9.16",
     "request": "^2.51.0"
   }
 }

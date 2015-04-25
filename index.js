@@ -9,10 +9,10 @@ var fs              = require('fs'),
     internals       = {};
 
 //create the scraper
-Scraper = new Scraper(Math.floor(requestSpan / 2));
+scraper = new Scraper(Math.floor(requestSpan / 2));
 
-process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
-process.env.API_URL     = 'http://localhost:3000/api/items';
+//process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
+//process.env.API_URL     = 'http://localhost:3000/api/items';
 
 process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
 process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
@@ -31,23 +31,21 @@ internals.init = function(mappings) {
 
         //remove and add stuff in parallel
         Async.parallel([
-            //eject stuff
+            //eject stuff (set to disabled)
             ejector.getToWork.bind(ejector, requestSpan),
             
             //scrape all mappings in parallel
             function(callback) {
-                Async.map(mappings, 
-                        internals.scrapeMapping, 
-                        function(err, results) {
-                    if (err) {
-                    
-                    //    throw err;
-                    }
-                    var injector = new Injector(process.env.API_URL, Math.floor(requestSpan / 2), ItemModel);
+                //before this set up the phanom instance
+                scraper.setUpPhantom(function() {
+                    //inb4 callback hell, call scrapeMapping on each mapping provided
+                    Async.map(mappings, internals.scrapeMapping, function(err, results) {
+                        var injector = new Injector(process.env.API_URL, Math.floor(requestSpan / 2), ItemModel);
 
-                    results = Hoek.flatten(results || []);
-                    injector.injectMultiple(results, callback);
-                });
+                        results = Hoek.flatten(results || []);
+                        injector.injectMultiple(results, callback);
+                    });
+                })
             }
         ], function(err, results) {
             if (err) {
@@ -70,7 +68,7 @@ internals.init = function(mappings) {
 internals.scrapeMapping = function(file, done) {
     try {
         var mapping = require('./mappings/' + file);
-        Scraper.scrape(file, mapping, done); 
+        scraper.scrape(file, mapping, done); 
     } catch (err) {
         return done(err); 
     }
@@ -80,9 +78,11 @@ internals.scrapeMapping = function(file, done) {
 if (process.argv.length === 3) {
     var mappingFile = process.argv[2];
 
-    internals.scrapeMapping(mappingFile, function(err, results) {
-        results = Hoek.flatten(results);
-        console.log(JSON.stringify(results, null, " "));
+    scraper.setUpPhantom(function() {
+        internals.scrapeMapping(mappingFile, function(err, results) {
+            results = Hoek.flatten(results);
+            console.log(JSON.stringify(results, null, " "));
+        });
     });
 } else {
     fs.readdir('./mappings/', function(err, files) {

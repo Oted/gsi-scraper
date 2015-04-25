@@ -1,0 +1,42 @@
+{
+    "urls" : [
+        "https://vimeo.com/categories/animation/videos",
+        "https://vimeo.com/categories/art/videos",
+        "https://vimeo.com/categories/comedy/videos",
+        "https://vimeo.com/categories/experimental/videos",
+        "https://vimeo.com/categories/documentary/videos",
+        "https://vimeo.com/categories/instructionals/videos",
+        "https://vimeo.com/categories/music/videos",
+        "https://vimeo.com/categories/narrative/videos",
+        "https://vimeo.com/categories/personal/videos",
+        "https://vimeo.com/categories/travel/videos",
+        "https://vimeo.com/categories/talks/videos",
+        "https://vimeo.com/categories/sports/videos",
+        "https://vimeo.com/categories/journalism/videos"
+    ],
+    "mapping" : {
+        "extractor" : "dom_array",
+        "path" : "li[id*=clip_]",
+        "type" : "object",
+        "mapping" : {
+            "extractor" : "dom_object",
+            "keys" : {
+                "title" : {
+                    "extractor" : "dom_string",
+                    "path" : "p.title",
+                    "functions" : [
+                        {
+                            "function" : "trim"
+                        }
+                    ]
+                },
+                "data" : {
+                    "extractor" : "dom_string",
+                    "path" : "a[href]",
+                    "attr" : "href",
+                    "prefix" : "https://vimeo.com"
+                }
+            }
+        }
+    }
+}
