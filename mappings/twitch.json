@@ -1,5 +1,5 @@
 {
     "urls"  : [
-        "https://api.twitch.tv/kraken/streams/featured?limit=60"
+        "https://api.twitch.tv/kraken/streams/featured?limit=100"
     ]
 }

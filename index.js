@@ -2,10 +2,11 @@ var fs              = require('fs'),
     Async           = require('async'),
     Hoek            = require('hoek'),
     Mongoose        = require('mongoose'),
+    TimeStamp       = require('mongoose-times'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 60 * 0.5,
+    requestSpan     = 1000 * 60 * 10,
     internals       = {};
 
 //create the scraper
@@ -17,47 +18,63 @@ scraper = new Scraper(Math.floor(requestSpan / 2));
 process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
 process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
 
-/**
- *  Init function for item processing
- */
+
 internals.init = function(mappings) {
-    console.time('runtime');
     console.log('Initializing...');
-    
-    var ejector = new Ejector(process.env.MONGO_URL, Mongoose, function(err, ItemModel) {
+
+    internals.setUpDb(function(err, ItemModel) {
         if (err) {
             throw err;
         }
+    
+        internals.initEject(ItemModel);
+        internals.initInject(mappings, ItemModel);
+    });
+}
 
-        //remove and add stuff in parallel
-        Async.parallel([
-            //eject stuff (set to disabled)
-            ejector.getToWork.bind(ejector, requestSpan),
-            
-            //scrape all mappings in parallel
-            function(callback) {
-                //before this set up the phanom instance
-                scraper.setUpPhantom(function() {
-                    //inb4 callback hell, call scrapeMapping on each mapping provided
-                    Async.map(mappings, internals.scrapeMapping, function(err, results) {
-                        var injector = new Injector(process.env.API_URL, Math.floor(requestSpan / 2), ItemModel);
 
-                        results = Hoek.flatten(results || []);
-                        injector.injectMultiple(results, callback);
-                    });
-                })
-            }
-        ], function(err, results) {
+/**
+ * Init function for the ejector.
+*/
+internals.initEject = function(ItemModel) {
+    console.log('starting a new ejection session');
+    console.time('eject');
+        
+    var ejector = new Ejector(ItemModel);
+    ejector.getToWork(Math.floor(requestSpan / 4), function(err, totals) {
+        if (err) {
+            throw err;
+        }
+        
+
+        console.timeEnd('eject');
+        console.log(JSON.stringify(totals, null, " "));
+        ejector = null;
+        return internals.initEject(ItemModel);
+    }); 
+};
+
+
+/**
+ *  Init function for adding items 
+ */
+internals.initInject = function(mappings, ItemModel) {
+    console.log('starting a new injection session');
+    console.time('inject');
+    //iterate over all mappings and scraper them 
+    Async.map(mappings, internals.scrapeMapping, function(err, results) {
+        var injector = new Injector(Math.floor(requestSpan / 2), ItemModel);
+
+        results = Hoek.flatten(results || []);
+        injector.injectMultiple(results, function(err, totals) {
             if (err) {
                 throw err;
             }
 
             console.log('this run took : ');
-            console.timeEnd('runtime');
-            console.log(JSON.stringify(results, null, " "));
-            ejector.close();
-            ejector = null;
-            internals.init(mappings);
+            console.timeEnd('inject');
+            console.log(JSON.stringify(totals, null, " "));
+            return internals.initInject(mappings, ItemModel);
         });
     });
 };
@@ -95,18 +112,51 @@ if (process.argv.length === 3) {
             return isJson.test(file);
         });
        
-        /**
-         *  Set an interval and repeat the scraping
-         */
-        // setInterval(function () {
-            // console.log('Starting a new session!');
-            // internals.init(mappings);
-        // }, requestSpan + 1000 * 60 * 3);
-            
         //and one at runstart
         internals.init(mappings);
     });
 }
+
+/**
+ * Set up dd
+ */
+internals.setUpDb = function(callback) {
+    //enum schema types
+    var itemTypes       = ['youtube', 'img', 'gif', 'gifv', 'soundcloud', 'vimeo', 'vine', 'text', 'video', 'instagram', 'twitch', 'ted', 'sound', 'other'];
+    
+    Mongoose.connect(process.env.MONGO_URL, function(err, res) {
+        if (err) {
+            return done(err);
+        }
+
+        //item schema
+        var itemSchema = new Mongoose.Schema({
+            _hash   : { type : String, unique : true },
+            _sort   : { type : String },
+            title   : { type : String },
+            type    : { type: String, enum: itemTypes },
+            data    : { type : Mongoose.Schema.Types.Mixed, required : 'Data is required.' },
+            score   : { type : Number, default : 0 },
+            ip      : { type : String },
+            scraped : { type : Boolean, default : false },
+            enabled : { type : Boolean, default : true }
+        }).plugin(TimeStamp);
+        
+        //item model
+        ItemModel = Mongoose.models.Item ? Mongoose.model('Item') : Mongoose.model('Item', itemSchema);
+        return callback(null, ItemModel);
+    });
+}
+
+/**
+ *  Close connection
+ */
+internals.close = function() {
+    console.log('Closing db!');
+    ItemModel = RatingModel = AddjectiveModel = null;
+    Mongoose.connection.close();
+};
+
 
 //on uncaught
 process.on('uncaughtException', function(err) {
