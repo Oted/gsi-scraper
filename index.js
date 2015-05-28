@@ -6,7 +6,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 30,
+    requestSpan     = 1000 * 60 * 20,
     internals       = {};
 
 //create the scraper
@@ -95,11 +95,9 @@ internals.scrapeMapping = function(file, done) {
 if (process.argv.length === 3) {
     var mappingFile = process.argv[2];
 
-    scraper.setUpPhantom(function() {
-        internals.scrapeMapping(mappingFile, function(err, results) {
-            results = Hoek.flatten(results);
-            console.log(JSON.stringify(results, null, " "));
-        });
+    internals.scrapeMapping(mappingFile, function(err, results) {
+        results = Hoek.flatten(results);
+        console.log(JSON.stringify(results, null, " "));
     });
 } else {
     fs.readdir('./mappings/', function(err, files) {
@@ -160,6 +158,6 @@ internals.close = function() {
 
 //on uncaught
 process.on('uncaughtException', function(err) {
-    //throw err;
+    throw err;
     console.log('Caught exception: ' + err);
 });
