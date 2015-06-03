@@ -28,7 +28,7 @@ internals.init = function(mappings) {
         }
     
         internals.initEject(ItemModel);
-        //internals.initInject(mappings, ItemModel);
+        internals.initInject(mappings, ItemModel);
     });
 }
 
@@ -48,6 +48,7 @@ internals.initEject = function(ItemModel) {
         
 
         console.timeEnd('eject');
+        console.log(new Date());
         console.log(JSON.stringify(totals, null, " "));
         ejector = null;
         return internals.initEject(ItemModel);
@@ -73,6 +74,7 @@ internals.initInject = function(mappings, ItemModel) {
 
             console.log('this run took : ');
             console.timeEnd('inject');
+            console.log(new Date());
             console.log(JSON.stringify(totals, null, " "));
             return internals.initInject(mappings, ItemModel);
         });
@@ -134,6 +136,7 @@ internals.setUpDb = function(callback) {
             title   : { type : String },
             type    : { type: String, enum: itemTypes },
             data    : { type : Mongoose.Schema.Types.Mixed, required : 'Data is required.' },
+            source  : { type : String },
             score   : { type : Number, default : 0 },
             ip      : { type : String },
             scraped : { type : Boolean, default : false },

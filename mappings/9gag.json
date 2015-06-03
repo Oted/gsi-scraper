@@ -12,6 +12,11 @@
                 "extractor" : "dom_string",
                 "path" : "h2.badge-item-title"
             },
+            "source" : {
+                "extractor" : "dom_string",
+                "path" : "link[rel=canonical]",
+                "attr" : "href"
+            },
             "data" : {
                 "try" : 
                 [

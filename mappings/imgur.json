@@ -30,6 +30,11 @@
                         }
                     ]
                 },
+                "source" : {
+                    "extractor" : "dom_string",
+                    "path" : "link[rel=canonical]",
+                    "attr" : "href"
+                },
                 "data" : {
                     "try" : 
                     [
