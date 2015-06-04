@@ -17,6 +17,11 @@
                     "extractor" : "dom_string",
                     "path" : "a.title"
                 },
+                "source" : {
+                    "extractor" : "dom_string",
+                    "path" : "a.title",
+                    "attr" : "href"
+                },
                 "data" : {
                     "try" : 
                     [
