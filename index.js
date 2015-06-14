@@ -1,12 +1,13 @@
 var fs              = require('fs'),
     Async           = require('async'),
     Hoek            = require('hoek'),
+    Utils           = require('./lib/utils.js'),
     Mongoose        = require('mongoose'),
     TimeStamp       = require('mongoose-times'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 30,
+    requestSpan     = 1000 * 60 * 20,
     internals       = {};
 
 //create the scraper
@@ -16,7 +17,7 @@ scraper = new Scraper(Math.floor(requestSpan / 2));
 //process.env.API_URL     = 'http://localhost:3000/api/items';
 
 process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
-process.env.API_URL     = 'http://188.166.45.196:3000/api/items';
+process.env.API_URL     = 'http://188.166.45.196/api/items';
 
 
 internals.init = function(mappings) {
@@ -27,7 +28,7 @@ internals.init = function(mappings) {
             throw err;
         }
     
-        //internals.initEject(ItemModel);
+        internals.initEject(ItemModel);
         internals.initInject(mappings, ItemModel);
     });
 }
@@ -67,6 +68,18 @@ internals.initInject = function(mappings, ItemModel) {
         var injector = new Injector(Math.floor(requestSpan / 2), ItemModel);
 
         results = Hoek.flatten(results || []);
+        
+        //do some filtering and fixes
+        results = results.filter(function(item){if (!item || !item.data) { return false }; return true}).map(function(item) {
+            if (!item.source) {
+                item.source = Utils.extractSourceFromData(item);
+            }
+
+            return item;
+        });
+
+        console.log(JSON.stringify(results, null, ' '));
+
         injector.injectMultiple(results, function(err, totals) {
             if (err) {
                 throw err;
