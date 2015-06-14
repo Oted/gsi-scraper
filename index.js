@@ -6,7 +6,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 20,
+    requestSpan     = 1000 * 30,
     internals       = {};
 
 //create the scraper
@@ -27,7 +27,7 @@ internals.init = function(mappings) {
             throw err;
         }
     
-        internals.initEject(ItemModel);
+        //internals.initEject(ItemModel);
         internals.initInject(mappings, ItemModel);
     });
 }

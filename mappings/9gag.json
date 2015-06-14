@@ -23,7 +23,7 @@
                     {
                         "extractor" : "dom_string",
                         "path" : "div.badge-animated-container-animated",
-                        "attr" : "data-image"
+                        "attr" : "data-mp4"
                     }, 
                     {
                         "extractor" : "dom_string",
