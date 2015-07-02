@@ -7,7 +7,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 60 * 20,
+    requestSpan     = 1000 * 30,
     internals       = {};
 
 //create the scraper
@@ -28,8 +28,11 @@ internals.init = function(mappings) {
             throw err;
         }
     
-        internals.initEject(ItemModel);
-        internals.initInject(mappings, ItemModel);
+        var injector = new Injector(Math.floor(requestSpan / 2), ItemModel);
+        var ejector = new Ejector(ItemModel);
+
+        internals.initEject(ejector, ItemModel);
+        internals.initInject(injector, mappings, ItemModel);
     });
 }
 
@@ -37,21 +40,18 @@ internals.init = function(mappings) {
 /**
  * Init function for the ejector.
 */
-internals.initEject = function(ItemModel) {
+internals.initEject = function(ejector, ItemModel) {
     console.log('starting a new ejection session');
     console.time('eject');
         
-    var ejector = new Ejector(ItemModel);
     ejector.getToWork(Math.floor(requestSpan / 4), function(err, totals) {
         if (err) {
             throw err;
         }
-        
 
         console.timeEnd('eject');
         console.log(new Date());
         console.log(JSON.stringify(totals, null, " "));
-        ejector = null;
         return internals.initEject(ItemModel);
     }); 
 };
@@ -60,17 +60,22 @@ internals.initEject = function(ItemModel) {
 /**
  *  Init function for adding items 
  */
-internals.initInject = function(mappings, ItemModel) {
+internals.initInject = function(injector, mappings, ItemModel) {
     console.log('starting a new injection session');
     console.time('inject');
+
     //iterate over all mappings and scraper them 
     Async.map(mappings, internals.scrapeMapping, function(err, results) {
-        var injector = new Injector(Math.floor(requestSpan / 2), ItemModel);
-
         results = Hoek.flatten(results || []);
         
         //do some filtering and fixes
-        results = results.filter(function(item){if (!item || !item.data) { return false }; return true}).map(function(item) {
+        results = results.filter(function(item) {
+            if (!item || !item.data) { 
+                return false 
+            };
+            
+            return true;
+        }).map(function(item) {
             if (!item.source) {
                 item.source = Utils.extractSourceFromData(item);
             }
