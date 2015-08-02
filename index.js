@@ -7,7 +7,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 30,
+    requestSpan     = 1000 * 60 * 10,
     internals       = {};
 
 //create the scraper
@@ -52,7 +52,7 @@ internals.initEject = function(ejector, ItemModel) {
         console.timeEnd('eject');
         console.log(new Date());
         console.log(JSON.stringify(totals, null, " "));
-        return internals.initEject(ItemModel);
+        return internals.initEject(ejector, ItemModel);
     }); 
 };
 
@@ -94,7 +94,7 @@ internals.initInject = function(injector, mappings, ItemModel) {
             console.timeEnd('inject');
             console.log(new Date());
             console.log(JSON.stringify(totals, null, " "));
-            return internals.initInject(mappings, ItemModel);
+            return internals.initInject(injector, mappings, ItemModel);
         });
     });
 };
