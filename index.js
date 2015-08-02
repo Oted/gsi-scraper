@@ -83,7 +83,7 @@ internals.initInject = function(injector, mappings, ItemModel) {
             return item;
         });
 
-        console.log(JSON.stringify(results, null, ' '));
+        //console.log(JSON.stringify(results, null, ' '));
 
         injector.injectMultiple(results, function(err, totals) {
             if (err) {
