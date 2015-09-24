@@ -27,6 +27,10 @@
                         {
                             "extractor" : "dom_string",
                             "path" : "#image-title"
+                        },
+                        {
+                            "extractor" : "dom_string",
+                            "path" : "h1.post-title"
                         }
                     ]
                 },
@@ -61,6 +65,12 @@
                                 "type" : "string",
                                 "path" : "gifUrl"
                             }
+                        },
+                        {
+                            "extractor"  : "dom_string",
+                            "path" : "div.post-image img",
+                            "attr" : "src",
+                            "prefix" : "http:"
                         }
                     ]
                 }
