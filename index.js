@@ -16,8 +16,8 @@ scraper = new Scraper(Math.floor(requestSpan / 2));
 //process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
 //process.env.API_URL     = 'http://localhost:3000/api/items';
 
-process.env.MONGO_URL   = 'mongodb://188.166.45.196:27017/messapp';
-process.env.API_URL     = 'http://188.166.45.196/api/items';
+process.env.MONGO_URL   = 'mongodb://37.139.19.174:27017/GIS';
+process.env.API_URL     = 'http://37.139.19.174/api/items';
 
 
 internals.init = function(mappings) {
