@@ -7,7 +7,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = 1000 * 60 * 60 * 4,
+    requestSpan     = process.argv.length === 3 ? 20000 : 1000 * 60 * 60 * 4,
     internals       = {};
 
 //create the scraper
