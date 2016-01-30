@@ -1,3 +1,6 @@
+require('dotenv').load();
+var RUN_TIME = 60000 : 1000 * 60 * 60 * 4;
+
 var fs              = require('fs'),
     Async           = require('async'),
     Hoek            = require('hoek'),
@@ -7,7 +10,7 @@ var fs              = require('fs'),
     Injector        = require('./lib/injector.js'),
     Ejector         = require('./lib/ejector.js'),
     Scraper         = require('./lib/scraper.js'),
-    requestSpan     = process.argv.length === 3 ? 20000 : 1000 * 60 * 60 * 4,
+    requestSpan     = process.argv.length === 3 ? ,
     internals       = {};
 
 //create the scraper
@@ -15,10 +18,6 @@ scraper = new Scraper(Math.floor(requestSpan / 2));
 
 //process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
 //process.env.API_URL     = 'http://localhost:3000/api/items';
-
-process.env.MONGO_URL   = 'mongodb://37.139.19.174:27017/GSI';
-process.env.API_URL     = 'http://37.139.19.174/api/items';
-
 
 internals.init = function(mappings) {
     console.log('Initializing...');
