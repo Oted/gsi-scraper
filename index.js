@@ -42,13 +42,15 @@ var run = function() {
                 return next();
             }
 
-            internals.count.total =+ results.length;
+            internals.count[dir]     = results.length;
+            internals.count['total'] =+ results.length;
+            console.log('used_mem : ' + process.memoryUsage().heapUsed);
 
             internals.items = internals.items.concat(Utils.middleware(results));
             return next();
         });
     }, function() {
-        console.log('Dealing with ' + internals.items.length + ' items now');
+        console.log('Dealing with ' + internals.items.length + ' items now...');
         
         return Async.eachLimit(Utils.shuffle(internals.items), 5, function(item, next) {
             return inject(item, function(err) {
@@ -57,9 +59,9 @@ var run = function() {
                 }, Math.floor(internals.items.length / RUN_TIME));
             });
         }, function(err) {
-            console.log('DONE!');
-            console.log(JSON.stringify(internals.count));
+            console.log(JSON.stringify(internals.count, null, " "));
             console.timeEnd('run');
+            console.log('DONE!');
         });
     });
 };
