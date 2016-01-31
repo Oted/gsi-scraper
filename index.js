@@ -59,7 +59,7 @@ var run = function() {
             return inject(item, function(err) {
                 return setTimeout(function() {
                     return next();
-                }, Math.floor(internals.items.length / RUN_TIME));
+                }, Math.floor(RUN_TIME /internals.items.length));
             });
         }, function(err) {
             console.log(JSON.stringify(internals.count, null, " "));
