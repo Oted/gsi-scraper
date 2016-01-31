@@ -29,24 +29,26 @@ var run = function() {
     });
 
     console.log('Scraping targets : \n' + directories.join('\n'));
+    console.log();
 
     //TIGHT, TIGHT, TIGHT
     return Async.each(directories, function(dir, next) {
-        return require('./lib/' + dir)(function(err, results) {
-            if (err) {
-                console.log('Err in ' + dir + ' : ' + err.message);
-            }
-
-            if (!results) {
+        return require('./lib/' + dir)(function(errors, results) {
+            results = Utils.middleware(results || []);
+            
+            if (results.length < 1) {
                 console.log('No items from ' + dir);
+                Utils.reportError(dir, errors.join(', '));
                 return next();
             }
 
-            internals.count[dir]     = results.length;
-            internals.count['total'] =+ results.length;
+            internals.count[dir]                = results.length;
+            internals.count[dir + '_errors']    = errors.length;
+            internals.count['total']           += results.length;
+
             console.log('used_mem : ' + process.memoryUsage().heapUsed);
 
-            internals.items = internals.items.concat(Utils.middleware(results));
+            internals.items = internals.items.concat(results);
             return next();
         });
     }, function() {

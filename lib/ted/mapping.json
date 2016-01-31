@@ -1,0 +1,7 @@
+{
+    "urls" : [
+        "http://www.ted.com/talks/grid?filter=trending",
+        "http://www.ted.com/talks/grid?filter=hidden",
+        "http://www.ted.com/talks/grid?filter=popular" 
+    ]   
+}

@@ -1,0 +1,16 @@
+{
+    "urls" : [
+        "http://9gag.com/hot",
+        "http://9gag.com/trending",
+        "http://9gag.com/fresh",
+        "http://9gag.com/funny",
+        "http://9gag.com/wtf",
+        "http://9gag.com/gif",
+        "http://9gag.com/meme",
+        "http://9gag.com/girl",
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=trending",
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=hot",
+        "http://ajax-9gag-lol.9cache.com/read/ajax-featured?pageType=fresh",
+        "http://ajax-cdn.9gag.com/read/ajax-featured"
+    ]
+}
