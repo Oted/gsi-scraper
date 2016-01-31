@@ -1,0 +1,9 @@
+{
+    "urls" : [
+         "http://www.reddit.com/r/videos/",
+        "http://www.reddit.com/r/videos/top/",
+        "http://www.reddit.com/r/videos/new/",
+        "http://www.reddit.com/r/videos/rising/",
+        "http://www.reddit.com/r/videos/controversial/"
+    ] 
+}

@@ -47,6 +47,7 @@ var run = function() {
             internals.count['total']           += results.length;
 
             console.log('used_mem : ' + process.memoryUsage().heapUsed);
+            console.log();
 
             internals.items = internals.items.concat(results);
             return next();
