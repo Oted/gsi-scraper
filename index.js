@@ -1,184 +1,98 @@
-var fs              = require('fs'),
+require('dotenv').load();
+
+var RUN_TIME = process.env.RUN_TIME || 1000 * 60 * 60;
+
+var Fs              = require('fs'),
     Async           = require('async'),
-    Hoek            = require('hoek'),
-    Utils           = require('./lib/utils.js'),
+    Request         = require('request'),
     Mongoose        = require('mongoose'),
-    TimeStamp       = require('mongoose-times'),
-    Injector        = require('./lib/injector.js'),
-    Ejector         = require('./lib/ejector.js'),
-    Scraper         = require('./lib/scraper.js'),
-    requestSpan     = process.argv.length === 3 ? 20000 : 1000 * 60 * 60 * 4,
-    internals       = {};
+    Utils           = require('./lib/utils');
 
-//create the scraper
-scraper = new Scraper(Math.floor(requestSpan / 2));
-
-//process.env.MONGO_URL   = 'mongodb://localhost:27017/messapp';
-//process.env.API_URL     = 'http://localhost:3000/api/items';
-
-process.env.MONGO_URL   = 'mongodb://37.139.19.174:27017/GSI';
-process.env.API_URL     = 'http://37.139.19.174/api/items';
-
-
-internals.init = function(mappings) {
-    console.log('Initializing...');
-
-    internals.setUpDb(function(err, ItemModel) {
-        if (err) {
-            throw err;
-        }
-    
-        var injector = new Injector(Math.floor(requestSpan / 2), ItemModel);
-        var ejector = new Ejector(ItemModel);
-
-        internals.initEject(ejector, ItemModel);
-        internals.initInject(injector, mappings, ItemModel);
-    });
-}
-
-
-/**
- * Init function for the ejector.
-*/
-internals.initEject = function(ejector, ItemModel) {
-    console.log('starting a new ejection session');
-    console.time('eject');
-        
-    ejector.getToWork(Math.floor(requestSpan / 4), function(err, totals) {
-        if (err) {
-            throw err;
-        }
-
-        console.timeEnd('eject');
-        console.log(new Date());
-        console.log(JSON.stringify(totals, null, " "));
-        return internals.initEject(ejector, ItemModel);
-    }); 
-};
-
-
-/**
- *  Init function for adding items 
- */
-internals.initInject = function(injector, mappings, ItemModel) {
-    console.log('starting a new injection session');
-    console.time('inject');
-
-    //iterate over all mappings and scraper them 
-    Async.map(mappings, internals.scrapeMapping, function(err, results) {
-        results = Hoek.flatten(results || []);
-        
-        //do some filtering and fixes
-        results = results.filter(function(item) {
-            if (!item || !item.data) { 
-                return false 
-            };
-            
-            return true;
-        }).map(function(item) {
-            if (!item.source) {
-                item.source = Utils.extractSourceFromData(item);
-            }
-
-            return item;
-        });
-
-        //console.log(JSON.stringify(results, null, ' '));
-
-        injector.injectMultiple(results, function(err, totals) {
-            if (err) {
-                throw err;
-            }
-
-            console.log('this run took : ');
-            console.timeEnd('inject');
-            console.log(new Date());
-            console.log(JSON.stringify(totals, null, " "));
-            return internals.initInject(injector, mappings, ItemModel);
-        });
-    });
-};
-
-/**
- *  Completely scrapes a mapping file and callbacks when done
- */
-internals.scrapeMapping = function(file, done) {
-    try {
-        var mapping = require('./mappings/' + file);
-        scraper.scrape(file, mapping, done); 
-    } catch (err) {
-        return done(err); 
+var internals = {
+    items : [],
+    count : {
+        'injects' : 0,
+        'rejects' : 0,
+        'total' : 0
     }
 };
 
-//if mapping file is provided, just debug it
-if (process.argv.length === 3) {
-    var mappingFile = process.argv[2];
+/**
+ *  Init function for index
+ */
+var run = function() {
+    console.time('run');
+    var path = require('path');
 
-    internals.scrapeMapping(mappingFile, function(err, results) {
-        results = Hoek.flatten(results);
-        console.log(JSON.stringify(results, null, " "));
+    var directories = Fs.readdirSync('./lib').filter(function(file) {
+        return Fs.statSync(path.join('./lib', file)).isDirectory();
     });
-} else {
-    fs.readdir('./mappings/', function(err, files) {
-        if (err) {
-            throw err;
-        } 
 
-        var isJson = /\.json$/;
-        var mappings = files.filter(function(file) {
-            return isJson.test(file);
+    console.log('Scraping targets : \n' + directories.join('\n'));
+    console.log();
+
+    //TIGHT, TIGHT, TIGHT
+    return Async.each(directories, function(dir, next) {
+        return require('./lib/' + dir)(function(errors, results) {
+            results = Utils.middleware(results || []);
+            
+            if (results.length < 1) {
+                console.log('No items from ' + dir);
+                Utils.reportError(dir, errors.join(', '));
+                return next();
+            }
+
+            internals.count[dir]                = results.length;
+            internals.count[dir + '_errors']    = errors.length;
+            internals.count['total']           += results.length;
+
+            console.log('used_mem : ' + process.memoryUsage().heapUsed);
+            console.log();
+
+            internals.items = internals.items.concat(results);
+            return next();
         });
-       
-        //and one at runstart
-        internals.init(mappings);
-    });
-}
-
-/**
- * Set up dd
- */
-internals.setUpDb = function(callback) {
-    //enum schema types
-    var itemTypes       = ['youtube', 'img', 'gif', 'gifv', 'soundcloud', 'vimeo', 'vine', 'text', 'video', 'instagram', 'twitch', 'ted', 'sound', 'other'];
-    
-    Mongoose.connect(process.env.MONGO_URL, function(err, res) {
-        if (err) {
-            return done(err);
-        }
-
-        //item schema
-        var itemSchema = new Mongoose.Schema({
-            _hash   : { type : String, unique : true },
-            _sort   : { type : String },
-            title   : { type : String },
-            type    : { type: String, enum: itemTypes },
-            data    : { type : Mongoose.Schema.Types.Mixed, required : 'Data is required.' },
-            source  : { type : String },
-            score   : { type : Number, default : 0 },
-            ip      : { type : String },
-            scraped : { type : Boolean, default : false },
-            enabled : { type : Boolean, default : true }
-        }).plugin(TimeStamp);
+    }, function() {
+        console.log('Dealing with ' + internals.items.length + ' items now...');
         
-        //item model
-        ItemModel = Mongoose.models.Item ? Mongoose.model('Item') : Mongoose.model('Item', itemSchema);
-        return callback(null, ItemModel);
+        return Async.eachLimit(Utils.shuffle(internals.items), 5, function(item, next) {
+            return inject(item, function(err) {
+                return setTimeout(function() {
+                    return next();
+                }, Math.floor(RUN_TIME /internals.items.length));
+            });
+        }, function(err) {
+            console.log(JSON.stringify(internals.count, null, " "));
+            console.timeEnd('run');
+            console.log('DONE!');
+        });
     });
-}
-
-/**
- *  Close connection
- */
-internals.close = function() {
-    console.log('Closing db!');
-    ItemModel = RatingModel = AddjectiveModel = null;
-    Mongoose.connection.close();
 };
 
+/**
+ *  Injects one item if allowed
+ */
+var inject = function(item, next) {
+    if (process.env.NODE_ENV === 'test') {
+        console.log('Would insert ' + item);
+        return next();
+    }
 
-//on uncaught
-process.on('uncaughtException', function(err) {
-    throw err;
-    console.log('Caught exception: ' + err);
-});
+    return Request.post({ url: process.env.API_URL, form: item }, function(err, httpResponse, body) {
+        if (err) {
+            internals.count.rejects++;
+            console.log('Error when inserting item ', err);
+            return next();
+        }
+        
+        if (httpResponse.statusCode !== 200) {
+            internals.count.rejects++;
+            return next();
+        }
+
+        internals.count.injects++;
+        return next();
+    });
+};
+
+return run();
