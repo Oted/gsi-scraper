@@ -1,5 +1,9 @@
 {
     "urls" : [
-        "https://api.vineapp.com/timelines/popular?size=100"
+        "https://api.vineapp.com/timelines/popular?size=100",
+        "https://vine.co/api/timelines/channels/1/popular",
+        "https://vine.co/api/timelines/channels/5/popular",
+        "https://vine.co/api/timelines/channels/14/popular",
+        "https://vine.co/api/timelines/channels/17/popular"
     ]
 }
