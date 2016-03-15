@@ -28,14 +28,19 @@ var run = function() {
         return Fs.statSync(path.join('./lib', file)).isDirectory();
     });
 
-    console.log('Scraping targets : \n' + directories.join('\n'));
+
+    console.log('Scraping targets : \n', process.env.TARGET ? process.env.TARGET : directories.join('\n'));
     console.log();
 
     //TIGHT, TIGHT, TIGHT
     return Async.each(directories, function(dir, next) {
+        if (process.env.TARGET && process.env.TARGET !== dir) {
+            return next();
+        }
+
         return require('./lib/' + dir)(function(errors, results) {
             results = Utils.middleware(results || []);
-            
+
             if (results.length < 1) {
                 console.log('No items from ' + dir);
                 Utils.reportError(dir, errors.join(', '));
@@ -54,7 +59,7 @@ var run = function() {
         });
     }, function() {
         console.log('Dealing with ' + internals.items.length + ' items now...');
-        
+
         return Async.eachLimit(Utils.shuffle(internals.items), 5, function(item, next) {
             return inject(item, function(err) {
                 return setTimeout(function() {
@@ -84,7 +89,7 @@ var inject = function(item, next) {
             console.log('Error when inserting item ', err);
             return next();
         }
-        
+
         if (httpResponse.statusCode !== 200) {
             internals.count.rejects++;
             return next();
