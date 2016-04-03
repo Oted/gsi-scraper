@@ -8,6 +8,8 @@
         "http://www.reddit.com/r/funny/.json?limit=200",
         "https://www.reddit.com/r/PerfectTiming.json?limit=100",
         "https://www.reddit.com/r/lifehacks/.json?limit=100",
+        "https://www.reddit.com/r/memes/.json?limit=100",
+        "https://www.reddit.com/r/wallpaper/.json?limit=100",
         "http://www.reddit.com/r/wtf/.json?limit=100",
         "http://www.reddit.com/r/AdviceAnimals/.json?limit=50",
         "http://www.reddit.com/r/gif/.json?limit=200",
