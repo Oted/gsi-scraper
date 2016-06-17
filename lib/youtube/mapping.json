@@ -1,5 +1,16 @@
 {
     "urls" : [
+        {"url":"https://www.youtube.com/user/bigthink/videos", "category" : "learning"},
+        {"url":"https://www.youtube.com/user/PlayStation/videos", "category" : "gaming"},
+        {"url":"https://www.youtube.com/channel/UCXMYxKMh3prxnM_4kYZuB3g/videos", "author" : false},
+        {"url":"https://www.youtube.com/user/jackfrags/videos", "category" : "gaming"},
+        {"url":"https://www.youtube.com/channel/UC4uREe0GpWN7g3Jd7B_ew-g/videos", "author" : false},
+        {"url":"https://www.youtube.com/channel/UCp8Ks-dSrPvOxVL6WndT-7g/videos", "author" : false},
+        {"url":"https://www.youtube.com/user/cbsnewswebextras/videos"},
+        {"url":"https://www.youtube.com/user/WESOandAustlog/videos"},
+        {"url":"https://www.youtube.com/user/DaveHax/videos"},
+        {"url":"https://www.youtube.com/user/JukinVideoDotCom/videos"},
+        {"url":"https://www.youtube.com/user/TheLateLateShow/videos"},
         {"url":"https://www.youtube.com/user/alltime10s/videos"},
         {"url":"https://www.youtube.com/user/billschannel/videos"},
         {"url":"https://www.youtube.com/user/TheRobDyke/videos"},
